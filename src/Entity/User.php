@@ -45,11 +45,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, \Serial
     #[ORM\Column(type: 'boolean')]
     private ?bool $isVerified;
 
+    #[ORM\OneToMany(mappedBy: 'instructor', targetEntity: Course::class, orphanRemoval: true)]
+    private Collection $courses;
+
     public function __construct()
     {
         $this->isActive = true;
         $this->isVerified = true;
         $this->roles = new ArrayCollection();
+        $this->courses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -172,6 +176,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, \Serial
     public function setIsVerified(bool $isVerified): static
     {
         $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    public function getCourses(): Collection
+    {
+        return $this->courses;
+    }
+
+    public function addCourse(Course $course): static
+    {
+        if (!$this->courses->contains($course)) {
+            $this->courses->add($course);
+            $course->setInstructor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCourse(Course $course): static
+    {
+        if ($this->courses->removeElement($course)) {
+            // set the owning side to null (unless already changed)
+            if ($course->getInstructor() === $this) {
+                $course->setInstructor(null);
+            }
+        }
 
         return $this;
     }
